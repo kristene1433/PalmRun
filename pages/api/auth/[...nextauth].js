@@ -1,3 +1,5 @@
+// pages/api/auth/[...nextauth].js
+
 import NextAuth from 'next-auth';
 import CredentialsProvider from 'next-auth/providers/credentials';
 import dbConnect from '../../../utils/db';
@@ -7,6 +9,10 @@ import bcrypt from 'bcrypt';
 export default NextAuth({
   session: {
     strategy: 'jwt',
+    maxAge: 30 * 60, // 30 minutes
+  },
+  jwt: {
+    maxAge: 30 * 60, // 30 minutes
   },
   secret: process.env.NEXTAUTH_SECRET,
   providers: [
@@ -32,7 +38,7 @@ export default NextAuth({
         return {
           id: user._id.toString(),
           email: user.email,
-          role: user.role || 'user', // default to 'user' if undefined
+          role: user.role || 'user',
         };
       },
     }),
@@ -53,6 +59,17 @@ export default NextAuth({
         session.user.role = token.role;
       }
       return session;
+    },
+  },
+  cookies: {
+    sessionToken: {
+      name: '__Secure-next-auth.session-token',
+      options: {
+        httpOnly: true,
+        sameSite: 'strict',
+        path: '/',
+        secure: process.env.NODE_ENV === 'production',
+      },
     },
   },
 });

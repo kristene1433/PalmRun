@@ -1,13 +1,23 @@
 // pages/signin.js
-import { useState } from 'react';
-import { signIn, useSession } from 'next-auth/react';
+import { useState, useEffect } from 'react';
+import { signIn, useSession, getSession } from 'next-auth/react';
 import { useRouter } from 'next/router';
 import Layout from '../components/Layout';
 import Link from 'next/link';
 
 export default function SignIn() {
   const router = useRouter();
+  const { data: session, status } = useSession();
   const [error, setError] = useState('');
+
+  // Redirect if already logged in
+  useEffect(() => {
+    if (status === 'authenticated') {
+      const role = session?.user?.role;
+      if (role === 'owner') router.push('/owner/dashboard');
+      else router.push('/user/dashboard');
+    }
+  }, [status, session, router]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -16,7 +26,6 @@ export default function SignIn() {
     const email = e.target.email.value;
     const password = e.target.password.value;
 
-    // Step 1: Attempt sign in
     const result = await signIn('credentials', {
       redirect: false,
       email,
@@ -24,15 +33,12 @@ export default function SignIn() {
     });
 
     if (result.error) {
-      // Invalid credentials
       setError(result.error);
     } else {
-      // Step 2: If sign-in succeeded, fetch the updated session
-      const res = await fetch('/api/auth/session'); // or `getSession()` from next-auth/react
-      const sessionData = await res.json();
+      const sessionData = await getSession();
+      const role = sessionData?.user?.role;
 
-      // Step 3: Check user’s role
-      if (sessionData?.user?.role === 'owner') {
+      if (role === 'owner') {
         router.push('/owner/dashboard');
       } else {
         router.push('/user/dashboard');
@@ -53,7 +59,7 @@ export default function SignIn() {
             <input
               name="email"
               type="email"
-              className="border rounded w-full py-2 px-3"
+              className="border rounded w-full py-2 px-3 focus:outline-none focus:ring-2 focus:ring-blue-200"
               required
             />
           </div>
@@ -62,13 +68,13 @@ export default function SignIn() {
             <input
               name="password"
               type="password"
-              className="border rounded w-full py-2 px-3"
+              className="border rounded w-full py-2 px-3 focus:outline-none focus:ring-2 focus:ring-blue-200"
               required
             />
           </div>
           <button
             type="submit"
-            className="w-full bg-neutral-800 text-white py-2 rounded hover:bg-neutral-700"
+            className="w-full bg-neutral-800 text-white py-2 rounded hover:bg-neutral-700 transition"
           >
             Log In
           </button>

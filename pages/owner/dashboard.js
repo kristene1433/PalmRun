@@ -1,24 +1,37 @@
 // pages/owner/dashboard.js
+
 import { useState, useEffect } from 'react';
 import Layout from '../../components/Layout';
+import { useSession } from 'next-auth/react';
+import { useRouter } from 'next/router';
 
 export default function OwnerDashboard() {
+  const { data: session, status } = useSession();
+  const router = useRouter();
   const [apps, setApps] = useState([]);
 
   useEffect(() => {
-    fetch('/api/applications')
-      .then((res) => res.json())
-      .then((data) => {
-        if (Array.isArray(data)) setApps(data);
-        else {
-          setApps([]);
-          console.error('Expected array from /api/applications');
-        }
-      })
-      .catch((err) => {
-        console.error('Error fetching applications:', err);
-      });
-  }, []);
+    if (status === 'unauthenticated') {
+      router.push('/login');
+    }
+  }, [status, router]);
+
+  useEffect(() => {
+    if (status === 'authenticated') {
+      fetch('/api/applications')
+        .then((res) => res.json())
+        .then((data) => {
+          if (Array.isArray(data)) setApps(data);
+          else {
+            setApps([]);
+            console.error('Expected array from /api/applications');
+          }
+        })
+        .catch((err) => {
+          console.error('Error fetching applications:', err);
+        });
+    }
+  }, [status]);
 
   const refreshApps = async () => {
     try {
@@ -70,27 +83,39 @@ export default function OwnerDashboard() {
     }
   };
 
+  if (status === 'loading') {
+    return (
+      <Layout>
+        <div className="bg-sky-50 min-h-screen flex items-center justify-center">
+          <p className="text-neutral-600 text-sm">Loading owner dashboard...</p>
+        </div>
+      </Layout>
+    );
+  }
+
   return (
     <Layout>
-      <div className="container mx-auto px-6 py-10">
-        <h1 className="text-3xl font-bold text-neutral-800 mb-6">Owner Dashboard</h1>
-        <p className="text-neutral-600 mb-6">Below are the latest user applications.</p>
+      <div className="bg-sky-50 min-h-screen">
+        <div className="container mx-auto px-6 py-10">
+          <h1 className="text-3xl font-bold text-neutral-800 mb-6">Owner Dashboard</h1>
+          <p className="text-lg text-neutral-600 mb-6">Below are the latest user applications.</p>
 
-        {apps.length === 0 ? (
-          <p className="text-neutral-600">No applications found or an error occurred.</p>
-        ) : (
-          <div className="space-y-4">
-            {apps.map((app) => (
-              <ApplicationCard
-                key={app._id}
-                app={app}
-                onApprove={handleApprove}
-                onDecline={handleDecline}
-                onDelete={handleDelete}
-              />
-            ))}
-          </div>
-        )}
+          {apps.length === 0 ? (
+            <p className="text-neutral-600">No applications found or an error occurred.</p>
+          ) : (
+            <div className="space-y-6">
+              {apps.map((app) => (
+                <ApplicationCard
+                  key={app._id}
+                  app={app}
+                  onApprove={handleApprove}
+                  onDecline={handleDecline}
+                  onDelete={handleDelete}
+                />
+              ))}
+            </div>
+          )}
+        </div>
       </div>
     </Layout>
   );
@@ -100,8 +125,8 @@ function ApplicationCard({ app, onApprove, onDecline, onDelete }) {
   const [comment, setComment] = useState('');
 
   return (
-    <div className="bg-white p-4 rounded shadow">
-      <h2 className="font-semibold text-lg mb-1">
+    <div className="bg-white p-6 rounded-lg shadow-md">
+      <h2 className="font-semibold text-lg text-neutral-800 mb-1">
         {app.firstName} {app.lastName}
       </h2>
       <p className="text-sm text-neutral-600 mb-1">
@@ -118,60 +143,59 @@ function ApplicationCard({ app, onApprove, onDecline, onDelete }) {
       )}
 
       {app.additionalRenters?.length > 0 && (
-        <div className="text-sm text-neutral-600">
+        <div className="text-sm text-neutral-600 mt-2">
           <strong>Additional Renters:</strong>
-          <ul className="list-disc ml-4">
+          <ul className="list-disc ml-5 mt-1">
             {app.additionalRenters.map((r, idx) => (
               <li key={idx}>
-                {r.firstName} {r.lastName} (
-                {r.isAdult ? 'Adult' : r.isChild ? 'Child' : ''})
+                {r.firstName} {r.lastName} ({r.isAdult ? 'Adult' : r.isChild ? 'Child' : ''})
               </li>
             ))}
           </ul>
         </div>
       )}
 
-      <p className="text-sm mt-2">
-        <strong>Status:</strong> {app.status}{' '}
+      <p className="text-sm text-neutral-700 mt-2">
+        <strong>Status:</strong> {app.status}
         {app.ownerComment && (
-          <span className="text-neutral-500">({app.ownerComment})</span>
+          <span className="text-neutral-500"> ({app.ownerComment})</span>
         )}
       </p>
 
       {app.payment && (
-        <div className="text-sm text-blue-600 mt-2">
+        <div className="text-sm text-blue-700 mt-3">
           <p><strong>Payment Status:</strong> {app.payment.status || 'N/A'}</p>
           <p><strong>Amount:</strong> ${app.payment.amount?.toFixed(2)}</p>
           <p><strong>Date:</strong> {app.payment.date ? new Date(app.payment.date).toLocaleDateString() : 'N/A'}</p>
         </div>
       )}
 
-      <div className="mt-2 flex items-center space-x-2">
+      <div className="mt-4 flex items-center space-x-2">
         <input
           type="text"
-          className="border rounded p-1 text-sm flex-grow"
+          className="border border-neutral-300 rounded px-3 py-1 text-sm flex-grow focus:outline-none focus:ring-2 focus:ring-blue-200"
           placeholder="Add comment if declining..."
           value={comment}
           onChange={(e) => setComment(e.target.value)}
         />
       </div>
 
-      <div className="flex space-x-2 mt-3">
+      <div className="flex space-x-3 mt-4">
         <button
           onClick={() => onApprove(app._id)}
-          className="bg-green-500 text-white px-2 py-1 text-sm rounded hover:bg-green-400"
+          className="bg-green-500 text-white px-3 py-1 text-sm rounded hover:bg-green-400 transition"
         >
           Approve
         </button>
         <button
           onClick={() => onDecline(app._id, comment)}
-          className="bg-red-500 text-white px-2 py-1 text-sm rounded hover:bg-red-400"
+          className="bg-red-500 text-white px-3 py-1 text-sm rounded hover:bg-red-400 transition"
         >
           Decline
         </button>
         <button
           onClick={() => onDelete(app._id)}
-          className="bg-gray-400 text-white px-2 py-1 text-sm rounded hover:bg-gray-500"
+          className="bg-gray-400 text-white px-3 py-1 text-sm rounded hover:bg-gray-500 transition"
         >
           Delete
         </button>
@@ -179,4 +203,5 @@ function ApplicationCard({ app, onApprove, onDecline, onDelete }) {
     </div>
   );
 }
+
 

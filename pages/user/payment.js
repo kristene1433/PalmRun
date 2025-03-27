@@ -1,4 +1,5 @@
 // pages/user/payment.js
+
 import { useEffect, useState } from 'react';
 import { loadStripe } from '@stripe/stripe-js';
 import Layout from '../../components/Layout';
@@ -55,24 +56,28 @@ export default function PaymentPage() {
 
   return (
     <Layout>
-      <div className="max-w-md mx-auto mt-10 p-4 bg-white shadow rounded">
-        <h1 className="text-xl font-semibold mb-4">Make a Payment</h1>
-        <label className="block mb-2 text-sm">Enter amount (USD):</label>
-        <input
-          type="number"
-          className="w-full border px-3 py-2 rounded mb-4"
-          placeholder="e.g. 250.00"
-          value={amount}
-          onChange={(e) => setAmount(e.target.value)}
-        />
-        {error && <p className="text-red-500 text-sm mb-2">{error}</p>}
-        <button
-          onClick={handleCheckout}
-          disabled={loading || !appId}
-          className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
-        >
-          {loading ? 'Processing...' : 'Proceed to Payment'}
-        </button>
+      <div className="bg-sky-50 min-h-screen">
+        <div className="max-w-md mx-auto px-6 py-16">
+          <div className="bg-white p-6 rounded-lg shadow-md">
+            <h1 className="text-2xl font-bold text-neutral-800 mb-4">Make a Payment</h1>
+            <label className="block mb-2 text-sm text-neutral-700">Enter amount (USD):</label>
+            <input
+              type="number"
+              className="w-full border border-neutral-300 rounded px-3 py-2 text-sm mb-4 focus:outline-none focus:ring-2 focus:ring-blue-200"
+              placeholder="e.g. 250.00"
+              value={amount}
+              onChange={(e) => setAmount(e.target.value)}
+            />
+            {error && <p className="text-red-500 text-sm mb-3">{error}</p>}
+            <button
+              onClick={handleCheckout}
+              disabled={loading || !appId}
+              className="w-full bg-blue-600 text-white py-2 rounded hover:bg-blue-700 transition"
+            >
+              {loading ? 'Processing...' : 'Proceed to Payment'}
+            </button>
+          </div>
+        </div>
       </div>
     </Layout>
   );
