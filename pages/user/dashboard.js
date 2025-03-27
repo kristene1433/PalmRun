@@ -1,51 +1,24 @@
-// pages/user/dashboard.js
-
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import Layout from '../../components/Layout';
-import { useSession } from 'next-auth/react';
-import { useRouter } from 'next/router';
+import { getSession } from 'next-auth/react';
 
-export default function UserDashboard() {
-  const { data: session, status } = useSession();
-  const router = useRouter();
+export default function UserDashboard({ session }) {
   const [myApps, setMyApps] = useState([]);
   const [error, setError] = useState('');
 
   useEffect(() => {
-    if (status === 'unauthenticated') {
-      router.push('/login');
-    }
-  }, [status, router]);
-
-  useEffect(() => {
-    if (status === 'authenticated') {
-      fetch('/api/applications')
-        .then((res) => {
-          if (!res.ok) {
-            throw new Error(`Server responded with status ${res.status}`);
-          }
-          return res.json();
-        })
-        .then((data) => {
-          setMyApps(data);
-        })
-        .catch((err) => {
-          console.error('Error fetching user applications:', err);
-          setError(err.message);
-        });
-    }
-  }, [status]);
-
-  if (status === 'loading') {
-    return (
-      <Layout>
-        <div className="bg-sky-50 min-h-screen flex items-center justify-center">
-          <p className="text-neutral-600 text-sm">Loading your dashboard...</p>
-        </div>
-      </Layout>
-    );
-  }
+    fetch('/api/applications')
+      .then((res) => {
+        if (!res.ok) throw new Error(`Server responded with status ${res.status}`);
+        return res.json();
+      })
+      .then((data) => setMyApps(data))
+      .catch((err) => {
+        console.error('Error fetching user applications:', err);
+        setError(err.message);
+      });
+  }, []);
 
   return (
     <Layout>
@@ -70,7 +43,7 @@ export default function UserDashboard() {
           </div>
 
           <p className="text-lg text-neutral-600 mb-8">
-            Welcome, {session?.user?.email}! You can submit an application or make a payment.
+            Welcome to the User Dashboard! You can submit an application or make a payment.
           </p>
 
           {error && (
@@ -147,4 +120,21 @@ function UserApplicationCard({ app }) {
       )}
     </div>
   );
+}
+
+export async function getServerSideProps(context) {
+  const session = await getSession(context);
+
+  if (!session) {
+    return {
+      redirect: {
+        destination: '/signin',
+        permanent: false,
+      },
+    };
+  }
+
+  return {
+    props: { session },
+  };
 }

@@ -1,37 +1,24 @@
-// pages/owner/dashboard.js
-
 import { useState, useEffect } from 'react';
 import Layout from '../../components/Layout';
-import { useSession } from 'next-auth/react';
-import { useRouter } from 'next/router';
+import { getSession } from 'next-auth/react';
 
-export default function OwnerDashboard() {
-  const { data: session, status } = useSession();
-  const router = useRouter();
+export default function OwnerDashboard({ session }) {
   const [apps, setApps] = useState([]);
 
   useEffect(() => {
-    if (status === 'unauthenticated') {
-      router.push('/login');
-    }
-  }, [status, router]);
-
-  useEffect(() => {
-    if (status === 'authenticated') {
-      fetch('/api/applications')
-        .then((res) => res.json())
-        .then((data) => {
-          if (Array.isArray(data)) setApps(data);
-          else {
-            setApps([]);
-            console.error('Expected array from /api/applications');
-          }
-        })
-        .catch((err) => {
-          console.error('Error fetching applications:', err);
-        });
-    }
-  }, [status]);
+    fetch('/api/applications')
+      .then((res) => res.json())
+      .then((data) => {
+        if (Array.isArray(data)) setApps(data);
+        else {
+          setApps([]);
+          console.error('Expected array from /api/applications');
+        }
+      })
+      .catch((err) => {
+        console.error('Error fetching applications:', err);
+      });
+  }, []);
 
   const refreshApps = async () => {
     try {
@@ -82,16 +69,6 @@ export default function OwnerDashboard() {
       console.error('Error deleting application:', error);
     }
   };
-
-  if (status === 'loading') {
-    return (
-      <Layout>
-        <div className="bg-sky-50 min-h-screen flex items-center justify-center">
-          <p className="text-neutral-600 text-sm">Loading owner dashboard...</p>
-        </div>
-      </Layout>
-    );
-  }
 
   return (
     <Layout>
@@ -156,10 +133,8 @@ function ApplicationCard({ app, onApprove, onDecline, onDelete }) {
       )}
 
       <p className="text-sm text-neutral-700 mt-2">
-        <strong>Status:</strong> {app.status}
-        {app.ownerComment && (
-          <span className="text-neutral-500"> ({app.ownerComment})</span>
-        )}
+        <strong>Status:</strong> {app.status}{' '}
+        {app.ownerComment && <span className="text-neutral-500">({app.ownerComment})</span>}
       </p>
 
       {app.payment && (
@@ -202,6 +177,23 @@ function ApplicationCard({ app, onApprove, onDecline, onDelete }) {
       </div>
     </div>
   );
+}
+
+export async function getServerSideProps(context) {
+  const session = await getSession(context);
+
+  if (!session || session.user.role !== 'owner') {
+    return {
+      redirect: {
+        destination: '/signin',
+        permanent: false,
+      },
+    };
+  }
+
+  return {
+    props: { session },
+  };
 }
 
 
