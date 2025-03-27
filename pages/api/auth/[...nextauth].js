@@ -1,5 +1,3 @@
-// pages/api/auth/[...nextauth].js
-
 import NextAuth from 'next-auth';
 import CredentialsProvider from 'next-auth/providers/credentials';
 import dbConnect from '../../../utils/db';
@@ -7,14 +5,19 @@ import User from '../../../models/User';
 import bcrypt from 'bcrypt';
 
 export default NextAuth({
+  // Session behavior (30 min expiry, JWT-based)
   session: {
     strategy: 'jwt',
     maxAge: 30 * 60, // 30 minutes
+    updateAge: 10 * 60, // refresh JWT every 10 mins
   },
+
   jwt: {
     maxAge: 30 * 60, // 30 minutes
   },
+
   secret: process.env.NEXTAUTH_SECRET,
+
   providers: [
     CredentialsProvider({
       name: 'Credentials',
@@ -24,8 +27,8 @@ export default NextAuth({
       },
       async authorize(credentials) {
         await dbConnect();
-
         const user = await User.findOne({ email: credentials.email });
+
         if (!user) {
           throw new Error('No user found');
         }
@@ -43,6 +46,7 @@ export default NextAuth({
       },
     }),
   ],
+
   callbacks: {
     async jwt({ token, user }) {
       if (user) {
@@ -61,6 +65,7 @@ export default NextAuth({
       return session;
     },
   },
+
   cookies: {
     sessionToken: {
       name: '__Secure-next-auth.session-token',

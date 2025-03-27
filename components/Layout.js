@@ -7,15 +7,15 @@ import Footer from './Footer';
 export default function Layout({ children }) {
   useEffect(() => {
     const handleBeforeUnload = () => {
-      signOut({ redirect: false }); // silently logs the user out
+      navigator.sendBeacon('/api/auth/signout');
     };
-
+  
     window.addEventListener('beforeunload', handleBeforeUnload);
-
     return () => {
       window.removeEventListener('beforeunload', handleBeforeUnload);
     };
   }, []);
+  
 
   return (
     <div className="min-h-screen flex flex-col">
@@ -25,4 +25,5 @@ export default function Layout({ children }) {
     </div>
   );
 }
+
 
