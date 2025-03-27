@@ -1,8 +1,6 @@
-// pages/register.js
-
 import { useState } from 'react';
 import { useRouter } from 'next/router';
-import { signIn } from 'next-auth/react'; // <-- Import signIn from NextAuth
+import { signIn } from 'next-auth/react';
 import Layout from '../components/Layout';
 import Link from 'next/link';
 
@@ -17,14 +15,13 @@ export default function Register() {
     e.preventDefault();
     setError('');
 
-    // Client-side check for matching passwords
     if (password !== verifyPassword) {
       setError('Passwords do not match');
       return;
     }
 
     try {
-      // 1. Create user in DB
+      // 1. Create user
       const response = await fetch('/api/register', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -36,20 +33,23 @@ export default function Register() {
         throw new Error(data.error || 'Registration failed');
       }
 
-      // 2. Auto-login with NextAuth 'credentials' provider
+      // 2. Sign in with newly created credentials
       const signInResult = await signIn('credentials', {
-        redirect: false,   // We'll handle the redirect manually
+        redirect: false,
         email,
         password,
       });
 
       if (signInResult.error) {
-        // If signIn fails, show an error
         throw new Error(signInResult.error);
       }
 
-      // 3. If signIn success, go to user dashboard
-      router.push('/user/dashboard');
+      // 3. Fetch session to check role
+      const res = await fetch('/api/auth/session');
+      const session = await res.json();
+      const role = session?.user?.role;
+
+      router.push(role === 'owner' ? '/owner/dashboard' : '/user/dashboard');
     } catch (err) {
       setError(err.message);
     }
@@ -71,10 +71,11 @@ export default function Register() {
           )}
 
           <div className="mb-4">
-            <label className="block text-neutral-700 mb-2">Email</label>
+            <label htmlFor="email" className="block text-neutral-700 mb-2">Email</label>
             <input
+              id="email"
               type="email"
-              className="border rounded w-full py-2 px-3"
+              className="border rounded w-full py-2 px-3 focus:outline-none focus:ring-2 focus:ring-blue-200"
               placeholder="Email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
@@ -83,10 +84,11 @@ export default function Register() {
           </div>
 
           <div className="mb-4">
-            <label className="block text-neutral-700 mb-2">Password</label>
+            <label htmlFor="password" className="block text-neutral-700 mb-2">Password</label>
             <input
+              id="password"
               type="password"
-              className="border rounded w-full py-2 px-3"
+              className="border rounded w-full py-2 px-3 focus:outline-none focus:ring-2 focus:ring-blue-200"
               placeholder="Password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
@@ -95,10 +97,11 @@ export default function Register() {
           </div>
 
           <div className="mb-6">
-            <label className="block text-neutral-700 mb-2">Verify Password</label>
+            <label htmlFor="verifyPassword" className="block text-neutral-700 mb-2">Verify Password</label>
             <input
+              id="verifyPassword"
               type="password"
-              className="border rounded w-full py-2 px-3"
+              className="border rounded w-full py-2 px-3 focus:outline-none focus:ring-2 focus:ring-blue-200"
               placeholder="Verify Password"
               value={verifyPassword}
               onChange={(e) => setVerifyPassword(e.target.value)}
@@ -108,7 +111,7 @@ export default function Register() {
 
           <button
             type="submit"
-            className="w-full bg-neutral-800 text-white py-2 rounded hover:bg-neutral-700"
+            className="w-full bg-neutral-800 text-white py-2 rounded hover:bg-neutral-700 transition"
           >
             Register
           </button>
