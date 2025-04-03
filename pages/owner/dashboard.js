@@ -80,7 +80,7 @@ export default function OwnerDashboard({ session }) {
           {apps.length === 0 ? (
             <p className="text-neutral-600">No applications found or an error occurred.</p>
           ) : (
-            <div className="space-y-6">
+            <div className="flex flex-col items-center gap-6">
               {apps.map((app) => (
                 <ApplicationCard
                   key={app._id}
@@ -101,8 +101,14 @@ export default function OwnerDashboard({ session }) {
 function ApplicationCard({ app, onApprove, onDecline, onDelete }) {
   const [comment, setComment] = useState('');
 
+  const statusColor = {
+    approved: 'bg-green-100 text-green-700',
+    declined: 'bg-red-100 text-red-700',
+    pending: 'bg-yellow-100 text-yellow-700',
+  };
+
   return (
-    <div className="bg-white p-6 rounded-lg shadow-md">
+    <div className="max-w-xl w-full bg-white p-6 rounded-lg shadow-lg border border-gray-200 transition-transform hover:scale-[1.01]">
       <h2 className="font-semibold text-lg text-neutral-800 mb-1">
         {app.firstName} {app.lastName}
       </h2>
@@ -132,23 +138,28 @@ function ApplicationCard({ app, onApprove, onDecline, onDelete }) {
         </div>
       )}
 
-      <p className="text-sm text-neutral-700 mt-2">
-        <strong>Status:</strong> {app.status}{' '}
-        {app.ownerComment && <span className="text-neutral-500">({app.ownerComment})</span>}
-      </p>
+      <div className="mt-2">
+        <p className="text-sm text-neutral-700">
+          <strong>Status:</strong>{' '}
+          <span className={`inline-block px-2 py-0.5 rounded text-xs font-medium ${statusColor[app.status] || 'bg-gray-100 text-gray-700'}`}>
+            {app.status}
+          </span>{' '}
+          {app.ownerComment && <span className="text-neutral-500">({app.ownerComment})</span>}
+        </p>
+      </div>
 
       {app.payment && (
-        <div className="text-sm text-blue-700 mt-3">
+        <div className="text-sm text-blue-700 mt-3 space-y-1">
           <p><strong>Payment Status:</strong> {app.payment.status || 'N/A'}</p>
           <p><strong>Amount:</strong> ${app.payment.amount?.toFixed(2)}</p>
           <p><strong>Date:</strong> {app.payment.date ? new Date(app.payment.date).toLocaleDateString() : 'N/A'}</p>
         </div>
       )}
 
-      <div className="mt-4 flex items-center space-x-2">
+      <div className="mt-4">
         <input
           type="text"
-          className="border border-neutral-300 rounded px-3 py-1 text-sm flex-grow focus:outline-none focus:ring-2 focus:ring-blue-200"
+          className="border border-neutral-300 rounded px-3 py-1 text-sm w-full focus:outline-none focus:ring-2 focus:ring-blue-200"
           placeholder="Add comment if declining..."
           value={comment}
           onChange={(e) => setComment(e.target.value)}

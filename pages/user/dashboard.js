@@ -56,7 +56,7 @@ export default function UserDashboard({ session }) {
           {myApps.length === 0 ? (
             <p className="text-sm text-neutral-600">No applications found.</p>
           ) : (
-            <div className="space-y-6">
+            <div className="flex flex-col items-center gap-6">
               {myApps.map((app) => (
                 <UserApplicationCard key={app._id} app={app} />
               ))}
@@ -69,8 +69,14 @@ export default function UserDashboard({ session }) {
 }
 
 function UserApplicationCard({ app }) {
+  const statusColor = {
+    approved: 'bg-green-100 text-green-700',
+    declined: 'bg-red-100 text-red-700',
+    pending: 'bg-yellow-100 text-yellow-700',
+  };
+
   return (
-    <div className="bg-white p-6 rounded-lg shadow-md">
+    <div className="max-w-xl w-full bg-white p-6 rounded-lg shadow-lg border border-gray-200 transition-transform hover:scale-[1.01]">
       <h3 className="font-semibold text-lg text-neutral-800 mb-1">
         {app.firstName} {app.lastName}
       </h3>
@@ -100,12 +106,17 @@ function UserApplicationCard({ app }) {
         </div>
       )}
 
-      <p className="text-sm text-neutral-700 mt-2">
-        <strong>Status:</strong> {app.status || 'pending'}
-        {app.ownerComment && (
-          <span className="text-neutral-500"> ({app.ownerComment})</span>
-        )}
-      </p>
+      <div className="mt-2">
+        <p className="text-sm text-neutral-700">
+          <strong>Status:</strong>{' '}
+          <span className={`inline-block px-2 py-0.5 rounded text-xs font-medium ${statusColor[app.status] || 'bg-gray-100 text-gray-700'}`}>
+            {app.status || 'pending'}
+          </span>
+          {app.ownerComment && (
+            <span className="text-neutral-500"> ({app.ownerComment})</span>
+          )}
+        </p>
+      </div>
 
       {app.status === 'approved' && (
         <p className="text-sm text-green-600 mt-1">
