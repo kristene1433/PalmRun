@@ -128,15 +128,22 @@ function ApplicationCard({ app, onApprove, onDecline, onDelete }) {
       {app.additionalRenters?.length > 0 && (
         <div className="text-sm text-neutral-600 mt-2">
           <strong>Additional Renters:</strong>
-          <ul className="list-disc ml-5 mt-1">
+          <ul className="list-disc ml-5 mt-1 space-y-2">
             {app.additionalRenters.map((r, idx) => (
               <li key={idx}>
-                {r.firstName} {r.lastName} ({r.isAdult ? 'Adult' : r.isChild ? 'Child' : ''})
+                <span className="font-medium text-neutral-700">{r.firstName} {r.lastName}</span>{' '}
+                <span className="italic text-neutral-500">({r.isAdult ? 'Adult' : r.isChild ? 'Child' : 'N/A'})</span>
+                {r.street1 && (
+                  <div className="ml-1 text-neutral-600">
+                    {r.street1}{r.street2 ? `, ${r.street2}` : ''}, {r.city}, {r.stateValue}, {r.zip}
+                  </div>
+                )}
               </li>
             ))}
           </ul>
         </div>
       )}
+
 
       <div className="mt-2">
         <p className="text-sm text-neutral-700">
